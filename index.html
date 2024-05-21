@@ -1,0 +1,171 @@
+<body>
+    <script>
+        let lineWidth = 3
+        let headThick = 15
+        let thick = 7
+        let colors = [[255, 255, 180, 'red'], [255, 255, 255, 'black'], [0, 0, 0, 'rgba(255,255,0)']]
+        let index = 2
+        let red = colors[index][0]
+        let green = colors[index][1]
+        let blue = colors[index][2]
+        let bg = colors[index][3]
+
+        document.body.style = `
+            margin: 0px;
+            background: #333;
+        `
+        const div = document.createElement('div')
+        div.style = `
+            display: flex;
+            justify-content: center;
+            align-items: middle;
+            height: 700px;
+        `
+        const canvas = document.createElement('canvas')
+        canvas.width = 700;
+        canvas.height = 700;
+        canvas.style = `
+            border: 1px solid gray;
+        `
+        div.append(canvas)
+        document.body.append(div)
+
+
+        const ctx = canvas.getContext("2d")
+        ctx.fillStyle = bg
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = `rgb(${red},${green},${blue})`
+        ctx.font = '24px Impact'
+        ctx.fillText('Artwork - Calligraphy By William77', 30, 670)
+
+        function MouseEventTracker(canvas, callback) {
+
+            canvas.addEventListener('mousemove', mm)
+            canvas.addEventListener('mousedown', md)
+            canvas.addEventListener('mouseup', mu)
+            canvas.addEventListener('mouseenter', me)
+
+            return
+
+            function mm(e) {
+                mouseObj.x = e.offsetX
+                mouseObj.y = e.offsetY
+                mouseObj.move = 1
+                callback(mouseObj)
+            }
+
+            function md(e) {
+                mouseObj.down = 1
+                callback(mouseObj)
+            }
+
+            function mu(e) {
+                mouseObj.down = 0
+                mouseObj.move = 0
+                callback(mouseObj)
+            }
+
+            function me(e) {
+                callback(mouseObj)
+            }
+        }
+
+        const mouseObj = {
+            x: 0,
+            y: 0,
+            down: 0,
+            move: 0,
+        }
+
+        MouseEventTracker(canvas, (pos) => {
+            let ratio = canvas.width / canvas.getClientRects()[0].width;
+            mouseObj.x = pos.x * ratio
+            mouseObj.y = pos.y * ratio
+            mouseObj.down = pos.down;
+            mouseObj.move = pos.move;
+        })
+
+        let flag = 1
+        let list = []
+        const draw = () => {
+            if (mouseObj.down) {
+                list.push(new BasicBody(canvas, mouseObj.x, mouseObj.y, flag))
+                list = list.filter(s => s.ctx)
+                list.forEach(s => s.draw(canvas, mouseObj.x, mouseObj.y))
+                flag = 0
+            } else {
+                flag = 1
+                list.forEach(s => s.destory())
+                list.length = 0
+            }
+            requestAnimationFrame(draw)
+        }
+        requestAnimationFrame(draw);
+
+        class BasicBody {
+            x = 0
+            y = 0
+            hx = 0
+            hy = 0
+            vx = 0
+            vy = 0
+            ctx
+            isHead = false
+            pass = 1
+            time = 0
+            constructor(canvas, x, y, isHead) {
+                this.ctx = canvas.getContext('2d')
+                this.ctx.moveTo(this.x = x, this.y = y)
+                this.isHead = isHead
+
+                if (isHead) {
+                    this.drawHead(canvas, x, y, headThick, 50)
+                }
+            }
+
+            drawHead(canvas, x, y, thick, furCount) {
+                for (let i = 0; i < furCount; i++) {
+                    const radius = 360 / furCount * i / 180 * Math.PI
+                    const rx = x + thick * Math.sin(radius)
+                    const ry = y + thick * Math.cos(radius)
+                    const bb = new BasicBody(canvas, rx, ry, false)
+                    bb.hx = x
+                    bb.hy = y
+                    list.push(bb)
+                }
+            }
+
+            draw(canvas, mx, my) {
+                if (!this.isHead) {
+                    this.ctx.beginPath()
+                    this.ctx.strokeStyle = `rgba(${red},${green},${blue},${1})`
+                    this.ctx.moveTo(this.x, this.y)
+                    this.ctx.lineTo(mx, my)
+                    this.ctx.stroke()
+                    this.ctx.closePath()
+                    const dist = Math.sqrt(Math.pow(mx - this.hx, 2) + (Math.pow(my - this.hy, 2)))
+                    if (dist > 30) this.isHead = !this.isHead, this.pass = true;
+                    return
+                } else {
+                    const px = this.x
+                    const py = this.y
+                    this.ctx.beginPath()
+                    this.ctx.lineWidth = lineWidth
+                    this.ctx.lineCap = "round";
+                    this.ctx.strokeStyle = `rgba(${red},${green},${blue},${1})`
+                    this.x += (mx - this.x) / thick
+                    this.y += (my - this.y) / thick
+                    this.ctx.moveTo(mx, my)
+                    this.ctx.lineTo(this.x, this.y)
+                    this.ctx.lineTo(px, py)
+                    this.ctx.lineTo(mx, my)
+                    this.ctx.stroke()
+                    this.ctx.closePath()
+                }
+            }
+            destory() {
+                this.ctx = null
+            }
+        }
+    </script>
+</body>
