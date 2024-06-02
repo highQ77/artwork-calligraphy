@@ -20,8 +20,9 @@
         let bg = colors[index][3]
 
         document.body.style = `
-            margin: 0px;
+            margin: 0px calc((100% - 700px) / 2);
             background: #333;
+            position: fixed;
         `
         const div = document.createElement('div')
         div.style = `
